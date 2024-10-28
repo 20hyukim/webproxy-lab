@@ -63,23 +63,24 @@ void doit(int fd)
         return;
     }
 
-    char response_body[MAXBUF] = "";
-    strcat(response_body, "<html><body><h1>Echoed Request Headers</h1><pre>");
-    strcat(response_body, buf);
-    strcat(response_body, "\r\n");
-    read_requesthdrs_echo(&rio, response_body);
-    strcat(response_body, "</pre></body></html>");
+    // char response_body[MAXBUF] = "";
+    // strcat(response_body, "<html><body><h1>Echoed Request Headers</h1><pre>");
+    // strcat(response_body, buf);
+    // strcat(response_body, "\r\n");
+    // read_requesthdrs_echo(&rio, response_body);
+    // strcat(response_body, "</pre></body></html>");
 
-    sprintf(buf, "HTTP/1.0 200 OK\r\n");
-    Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Server: Tiny Web Server\r\n");
-    Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-length: %d\r\n", (int)strlen(response_body));
-    Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-type: text/html\r\n\r\n");
-    Rio_writen(fd, buf, strlen(buf));
-    Rio_writen(fd, response_body, strlen(response_body));
+    // sprintf(buf, "HTTP/1.0 200 OK\r\n");
+    // Rio_writen(fd, buf, strlen(buf));
+    // sprintf(buf, "Server: Tiny Web Server\r\n");
+    // Rio_writen(fd, buf, strlen(buf));
+    // sprintf(buf, "Content-length: %d\r\n", (int)strlen(response_body));
+    // Rio_writen(fd, buf, strlen(buf));
+    // sprintf(buf, "Content-type: text/html\r\n\r\n");
+    // Rio_writen(fd, buf, strlen(buf));
+    // Rio_writen(fd, response_body, strlen(response_body));
 
+    read_requesthdrs(&rio);
 
     /* Parse URI from GET request */
     is_static = parse_uri(uri, filename, cgiargs);
@@ -218,6 +219,8 @@ void get_filetype(char *filename, char *filetype)
         strcpy(filetype, "image/png");
     else if (strstr(filename, ".jpg"))
         strcpy(filetype, "image/jpeg");
+    else if (strstr(filename, ".mpg"))
+        strcpy(filetype, "video/mpeg");
     else
         strcpy(filetype, "text/plain");
 }
