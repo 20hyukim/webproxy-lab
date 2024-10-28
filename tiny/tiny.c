@@ -200,10 +200,24 @@ void serve_static(int fd, char *filename, int filesize)
 
     /* Send response body to client */
     srcfd = Open(filename, O_RDONLY, 0);
-    srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+
+    srcp = (char *)malloc(filesize);
+    if (srcp == NULL) {
+      Close(srcfd);
+      clienterror(fd, filename, "500", "Internal Server Error", "Memory allocation failed");
+      return;
+    }
+
+    if (rio_readn(srcfd, srcp, filesize) != filesize) {
+      Close(srcfd);
+      free(srcp);
+      clienterror(fd, filename, "500", "Internal Server Error", "Memory allocation failed");
+      return;
+    }
+
     Close(srcfd);
     Rio_writen(fd, srcp, filesize);
-    Munmap(srcp, filesize);
+    free(srcp);
 }
 
 /*
