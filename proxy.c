@@ -8,6 +8,7 @@ static const char *user_agent_hdr =
     "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 "
     "Firefox/10.0.3\r\n";
 
+void *thread(void *vargp);
 void doit(int connfd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *hostname, char *path, int *port);
@@ -16,10 +17,10 @@ void forward_request(int clientfd, char *hostname, char *path, int port);
 
 /* main 함수: 프록시 서버 시작 */
 int main(int argc, char **argv) {
-    int listenfd, connfd;
+    int listenfd, *connfdp;
     socklen_t clientlen;
     struct sockaddr_storage clientaddr;
-    char hostname[MAXLINE], port[MAXLINE];
+    pthread_t tid;
 
     /* 명령줄 인자 확인 */
     if (argc != 2) {
@@ -31,16 +32,21 @@ int main(int argc, char **argv) {
     listenfd = Open_listenfd(argv[1]);
     while (1) {
         clientlen = sizeof(clientaddr);
-        connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-        Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
-        printf("Accepted connection from (%s, %s)\n", hostname, port);
-        
-        /* 클라이언트 요청 처리 */
-        doit(connfd);
-        Close(connfd);
+        connfdp = Malloc(sizeof(int));
+        *connfdp = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+        Pthread_create(&tid, NULL, thread, connfdp);
     }
 
     return 0;
+}
+
+void *thread(void *vargp) {
+  int connfd = *((int *)vargp);
+  Pthread_detach(pthread_self());
+  Free(vargp);
+  doit(connfd);
+  Close(connfd);
+  return NULL;
 }
 
 /* 클라이언트 요청을 처리하는 함수 */
