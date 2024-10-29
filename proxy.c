@@ -3,6 +3,23 @@
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 
+typedef struct CacheNode {
+  char url[MAXLINE];
+  char data[MAX_OBJECT_SIZE];
+  int size;
+  struct CacheNode *prev;
+  struct CacheNode *next;
+} CacheNode;
+
+typedef struct {
+  CacheNode *head;
+  CacheNode *tail;
+  int total_size;
+  pthread_rwlock_t lock;
+} CacheList;
+
+CacheList cache;
+
 /* 사용자 에이전트 헤더 상수 */
 static const char *user_agent_hdr = 
     "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 "
@@ -13,7 +30,15 @@ void doit(int connfd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *hostname, char *path, int *port);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
-void forward_request(int clientfd, char *hostname, char *path, int port);
+void forward_request(int clientfd, char *hostname, char *path, int port, char *uri);
+void cache_init();
+void cache_store(char *url, char *data, int size);
+CacheNode* cache_find(char *url);
+void cache_evict();
+void move_to_front(CacheNode *node);
+void normalize_url(char *url, char *normalized_url);
+void print_cache_state();
+
 
 /* main 함수: 프록시 서버 시작 */
 int main(int argc, char **argv) {
@@ -22,9 +47,13 @@ int main(int argc, char **argv) {
     struct sockaddr_storage clientaddr;
     pthread_t tid;
 
+    cache_init();
+
     /* 명령줄 인자 확인 */
     if (argc != 2) {
-        fprintf(stderr, "usage: %s <port>\n", argv[0]);
+        FILE *log_file = fopen("proxy_debug_log.txt", "a");
+        fprintf(log_file, "usage: %s <port>\n", argv[0]);
+        fclose(log_file);
         exit(1);
     }
 
@@ -38,6 +67,152 @@ int main(int argc, char **argv) {
     }
 
     return 0;
+}
+
+void print_cache_state() {
+    FILE *log_file = fopen("proxy_debug_log.txt", "a");
+    fprintf(log_file, "Current cache state:\n");
+    CacheNode *current = cache.head;
+    while (current != NULL) {
+        fprintf(log_file, "URL: %s, Size: %d\n", current->url, current->size);
+        current = current->next;
+    }
+    fprintf(log_file, "Total cache size: %d\n", cache.total_size);
+    fclose(log_file);
+}
+
+void cache_init() {
+  cache.head = NULL;
+  cache.tail = NULL;
+  cache.total_size = 0;
+  pthread_rwlock_init(&cache.lock, NULL);
+}
+
+void normalize_url(char *url, char *normalized_url) {
+  char *path_start = strstr(url, "http://");
+  if (path_start) {
+    path_start += 7;
+  } else {
+    path_start = url;
+  }
+
+  path_start = strchr(path_start, '/');
+  if (path_start)  {
+    strcpy(normalized_url, path_start);
+  } else {
+    strcpy(normalized_url, "/");
+  }
+}
+
+CacheNode* cache_find(char *url) {
+    char normalized_url[MAXLINE];
+    normalize_url(url, normalized_url);
+
+    FILE *log_file = fopen("proxy_debug_log.txt", "a");
+    fprintf(log_file, "Searching cache for URL: %s\n", normalized_url);
+    pthread_rwlock_rdlock(&cache.lock);
+    CacheNode *current = cache.head;
+    while (current != NULL) {
+        if (strcmp(current->url, normalized_url) == 0) {
+            fprintf(log_file, "Cache hit for URL: %s\n", normalized_url);
+            move_to_front(current);
+            pthread_rwlock_unlock(&cache.lock);
+            fclose(log_file);
+            print_cache_state();
+            return current;
+        }
+        current = current->next;
+    }
+    fprintf(log_file, "Cache miss for URL: %s\n", normalized_url);
+    fclose(log_file);
+    pthread_rwlock_unlock(&cache.lock);
+    print_cache_state();
+    return NULL;
+}
+
+void cache_store(char *url, char *data, int size) {
+    char normalized_url[MAXLINE];
+    normalize_url(url, normalized_url);
+
+    FILE *log_file = fopen("proxy_debug_log.txt", "a");
+    if (size > MAX_OBJECT_SIZE) {
+        fprintf(log_file, "Object size exceeds MAX_OBJECT_SIZE. Not caching URL: %s\n", normalized_url);
+        fclose(log_file);
+        print_cache_state();
+        return;
+    }
+
+    pthread_rwlock_wrlock(&cache.lock);
+    fprintf(stderr, "Storing URL: %s with size: %d in cache\n", normalized_url, size);
+
+    while (cache.total_size + size > MAX_CACHE_SIZE) {
+        cache_evict();
+    }
+
+    CacheNode *new_node = Malloc(sizeof(CacheNode));
+    strcpy(new_node->url, normalized_url);
+    memcpy(new_node->data, data, size);
+    new_node->size = size;
+    new_node->prev = NULL;
+    new_node->next = cache.head;
+
+    if (cache.head != NULL) {
+        cache.head->prev = new_node;
+    }
+    cache.head = new_node;
+    if (cache.tail == NULL) {
+        cache.tail = new_node;
+    }
+    cache.total_size += size;
+
+    pthread_rwlock_unlock(&cache.lock);
+    fprintf(log_file, "Cache total size after storing: %d\n", cache.total_size);
+    fclose(log_file);
+    print_cache_state();
+}
+
+void cache_evict() {
+  if (cache.head == NULL) {
+    return;
+  }
+
+  CacheNode *node = cache.tail;
+
+  if (node -> prev != NULL) {
+    node -> prev -> next = NULL;
+  } else {
+    cache.head = NULL;
+  }
+  cache.tail = node -> prev;
+
+  cache.total_size -= node -> size;
+  Free(node);
+}
+
+void move_to_front(CacheNode *node) {
+    if (node == cache.head) {
+        return;
+    }
+
+    if (node->prev != NULL) {
+        node->prev->next = node->next;
+    }
+    if (node->next != NULL) {
+        node->next->prev = node->prev;
+    }
+    if (node == cache.tail) {
+        cache.tail = node->prev;
+    }
+
+    node->next = cache.head;
+    node->prev = NULL;
+    if (cache.head != NULL) {
+        cache.head->prev = node;
+    }
+    cache.head = node;
+    if (cache.tail == NULL) {
+        cache.tail = node;
+    }
 }
 
 void *thread(void *vargp) {
@@ -70,6 +245,12 @@ void doit(int clientfd) {
     /* 요청 헤더 읽기 */
     read_requesthdrs(&rio);
 
+    CacheNode *cache_node = cache_find(uri);
+    if (cache_node != NULL) {
+      Rio_writen(clientfd, cache_node -> data, cache_node -> size);
+      return;
+    }
+
     /* URI 파싱 */
     if (parse_uri(uri, hostname, path, &port) < 0) {
         clienterror(clientfd, uri, "400", "Bad Request", "Invalid URI");
@@ -77,7 +258,7 @@ void doit(int clientfd) {
     }
 
     /* Tiny 서버에 요청 전달 */
-    forward_request(clientfd, hostname, path, port);
+    forward_request(clientfd, hostname, path, port, uri);
 }
 
 /* 요청 헤더를 읽고 무시하는 함수 */
@@ -136,10 +317,11 @@ void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longms
 }
 
 /* Tiny 서버에 요청을 전달하고 응답을 클라이언트로 전달 */
-void forward_request(int clientfd, char *hostname, char *path, int port) {
+void forward_request(int clientfd, char *hostname, char *path, int port, char *uri) {
     int serverfd;
-    char buf[MAXLINE];
+    char buf[MAXLINE], cache_buf[MAX_OBJECT_SIZE];
     rio_t server_rio;
+    int total_size = 0;
 
     /* Tiny 서버와의 연결 설정 */
     char port_str[10];
@@ -167,6 +349,14 @@ void forward_request(int clientfd, char *hostname, char *path, int port) {
     size_t n;
     while ((n = Rio_readlineb(&server_rio, buf, MAXLINE)) != 0) {
         Rio_writen(clientfd, buf, n);
+        if (total_size + n < MAX_OBJECT_SIZE) {
+          memcpy(cache_buf + total_size, buf, n);
+        }
+        total_size += n;
+    }
+
+    if (total_size <= MAX_OBJECT_SIZE) {
+      cache_store(uri, cache_buf, total_size);
     }
 
     /* Tiny 서버와의 연결 종료 */
