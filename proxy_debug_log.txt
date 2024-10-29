@@ -1,125 +1,68 @@
+Searching cache for URL: localhost/home.html
+Cache miss for URL: localhost/home.html
+Searching cache for URL: localhost/nop-file.txt
+Cache miss for URL: localhost/nop-file.txt
+Searching cache for URL: localhost/tiny.c
+Cache miss for URL: localhost/tiny.c
 Searching cache for URL: /home.html
 Cache miss for URL: /home.html
-Current cache state:
-Total cache size: 0
-Searching cache for URL: /nop-file.txt
-Cache miss for URL: /nop-file.txt
-Current cache state:
-Total cache size: 0
-Searching cache for URL: /home.html
-Cache miss for URL: /home.html
-Current cache state:
-Total cache size: 0
-Searching cache for URL: /tiny.c
-Cache miss for URL: /tiny.c
-Current cache state:
-Total cache size: 0
-Searching cache for URL: /home.html
-Cache miss for URL: /home.html
-Current cache state:
-Total cache size: 0
 Cache total size after storing: 1815
-Current cache state:
-URL: /, Size: 1815
-Total cache size: 1815
 Searching cache for URL: /csapp.c
 Cache miss for URL: /csapp.c
-Current cache state:
-URL: /, Size: 1815
-Total cache size: 1815
 Cache total size after storing: 25962
-Current cache state:
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 25962
 Searching cache for URL: /tiny.c
 Cache miss for URL: /tiny.c
-Current cache state:
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 25962
 Cache total size after storing: 34333
-Current cache state:
-URL: /, Size: 8371
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 34333
 Searching cache for URL: /godzilla.jpg
 Cache miss for URL: /godzilla.jpg
-Current cache state:
-URL: /, Size: 8371
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 34333
 Cache total size after storing: 45303
-Current cache state:
-URL: /, Size: 10970
-URL: /, Size: 8371
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 45303
 Searching cache for URL: /tiny
 Cache miss for URL: /tiny
-Current cache state:
-URL: /, Size: 10970
-URL: /, Size: 8371
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 45303
 Cache total size after storing: 115495
-Current cache state:
-URL: /, Size: 70192
-URL: /, Size: 10970
-URL: /, Size: 8371
-URL: /, Size: 24147
-URL: /, Size: 1815
-Total cache size: 115495
 Searching cache for URL: /nop-file.txt
 Cache miss for URL: /nop-file.txt
-Current cache state:
-Total cache size: 0
 Searching cache for URL: /home.html
 Cache miss for URL: /home.html
-Current cache state:
-Total cache size: 0
 Cache total size after storing: 1815
-Current cache state:
-URL: /, Size: 1815
-Total cache size: 1815
 Searching cache for URL: /tiny.c
 Cache miss for URL: /tiny.c
-Current cache state:
-Total cache size: 0
 Cache total size after storing: 8371
-Current cache state:
-URL: /, Size: 8371
-Total cache size: 8371
 Searching cache for URL: /home.html
 Cache miss for URL: /home.html
-Current cache state:
-URL: /, Size: 8371
-Total cache size: 8371
 Cache total size after storing: 10186
-Current cache state:
-URL: /, Size: 1815
-URL: /, Size: 8371
-Total cache size: 10186
 Searching cache for URL: /csapp.c
 Cache miss for URL: /csapp.c
-Current cache state:
-URL: /, Size: 1815
-URL: /, Size: 8371
-Total cache size: 10186
 Cache total size after storing: 34333
-Current cache state:
-URL: /, Size: 24147
-URL: /, Size: 1815
-URL: /, Size: 8371
-Total cache size: 34333
 Searching cache for URL: /home.html
 Cache miss for URL: /home.html
-Current cache state:
-URL: /, Size: 24147
-URL: /, Size: 1815
-URL: /, Size: 8371
-Total cache size: 34333
+Searching cache for URL: /home.html
+Cache miss for URL: /home.html
+Cache total size after storing: 1815
+Searching cache for URL: /csapp.c
+Cache miss for URL: /csapp.c
+Cache total size after storing: 25962
+Searching cache for URL: /tiny.c
+Cache miss for URL: /tiny.c
+Cache total size after storing: 34333
+Searching cache for URL: /godzilla.jpg
+Cache miss for URL: /godzilla.jpg
+Cache total size after storing: 45303
+Searching cache for URL: /tiny
+Cache miss for URL: /tiny
+Cache total size after storing: 115495
+Searching cache for URL: /nop-file.txt
+Cache miss for URL: /nop-file.txt
+Searching cache for URL: /home.html
+Cache miss for URL: /home.html
+Cache total size after storing: 1815
+Searching cache for URL: /tiny.c
+Cache miss for URL: /tiny.c
+Cache total size after storing: 8371
+Searching cache for URL: /home.html
+Cache miss for URL: /home.html
+Cache total size after storing: 10186
+Searching cache for URL: /csapp.c
+Cache miss for URL: /csapp.c
+Cache total size after storing: 34333
+Searching cache for URL: /home.html
+Cache miss for URL: /home.html
